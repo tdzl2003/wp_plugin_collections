@@ -11,8 +11,6 @@ class WP_QQ_APP_LOGIN_Api{
 			));
 	}
 	public function processLogin(WP_REST_Request $request){
-		if (!function_exists(''))
-
 		$params = $request->get_params();
 
 		$option = get_option('qq-app-login');
@@ -25,16 +23,17 @@ class WP_QQ_APP_LOGIN_Api{
 				'sslcertificates' => dirname(__FILE__).'/ca-bundle.crt'
 			])['body'], true);
 
-		if (isset($val['ret']) && $val['ret'] != 0){
+		if (isset($result['ret']) && $result['ret'] != 0){
 			return new WP_Error( 'auth_failed', $val['msg'], array( 'status' => 403 ) );
 		}
 
 		if (!wp_app_sso_login("qq", $openid, $token))
 		{
-			wp_app_sso_register("qq", $openid, $token, array(
-					'nickname' => $result['nickname'],
-					'image' => $result['figureurl_qq_2'],
-				));
+			return new WP_Error( 'not_registered', '还没有注册。', array( 'status' => 404 ) );
+			// wp_app_sso_register("qq", $openid, $token, array(
+			// 		'nickname' => $result['nickname'],
+			// 		'image' => $result['figureurl_qq_2'],
+			// 	));
 		}
 
 		return array(

@@ -57,7 +57,9 @@ function wp_app_sso_login($type, $id, $token){
 	if ($uid){
 		wp_set_auth_cookie($uid, true, false);
 		wp_set_current_user($uid);
-		update_user_meta($uid, 'open_token_'.$type, $token);
+		if (isset($token)){
+			update_user_meta($uid, 'open_token_'.$type, $token);
+		}
 	}
 	return $uid;
 }
@@ -76,11 +78,19 @@ function wp_app_sso_register($type, $id, $token, $info){
 		include_once( ABSPATH . WPINC . '/registration.php' );
 	} 
 	$uid = wp_insert_user($userdata);
+	if (is_wp_error($uid)){
+		return $uid;
+	}
 	wp_set_auth_cookie($uid, true, false);
 	wp_set_current_user($uid);
 	if (isset($info['image'])){
 		update_user_meta($uid, 'open_img', $info['image']);
 	}
 	update_user_meta($uid, 'open_type_'.$type, $id);
-	update_user_meta($uid, 'open_token_'.$type, $token);
+	
+	if (isset($token)){
+		update_user_meta($uid, 'open_token_'.$type, $token);
+	}
+
+	apply_filters('sso_registered', $uid, $info);
 }

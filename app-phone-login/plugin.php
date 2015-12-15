@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: 移动APP:QQ登录
- * Description: 提供RESTful的QQ登录接口，供移动APP使用。
+ * Plugin Name: 移动APP:手机登录
+ * Description: 提供RESTful的手机登录接口，可以发送验证码，供移动APP使用。
  * Author: tdzl2003
  * Author URI: http://github.com/tdzl2003
  * Version: 0.1.0
@@ -9,17 +9,23 @@
  * License: GPL2+
  */
 
+if(!session_id()) {
+    session_start();
+}
+
 require_once dirname(__FILE__).'/src/options.php';
 
 require_once dirname(__FILE__).'/src/api.php';
 
-class WP_QQ_APP_LOGIN {
+class WP_PHONE_APP_LOGIN {
 	var $Options;
 	var $Api;
 
 	public function __construct() {
-		$this->Options = new WP_QQ_APP_LOGIN_Options();
-		$this->Api = new WP_QQ_APP_LOGIN_Api();
+		$Options = new WP_PHONE_APP_LOGIN_Options();
+		$Api = new WP_PHONE_APP_LOGIN_Api();
+
+		register_activation_hook( __FILE__, array($Api, 'install') );
 	}
 	public static function instance() {
 		static $instance = null;
@@ -32,5 +38,5 @@ class WP_QQ_APP_LOGIN {
 	}
 }
 
-WP_QQ_APP_LOGIN::instance();
+WP_PHONE_APP_LOGIN::instance();
 

@@ -37,24 +37,26 @@ class WP_QQ_APP_LOGIN_Options {
 
 	    $opt_val = get_option('qq-app-login');
 
-	    if (isset($_POST['appid']) && isset($_POST['appkey']) && 
-	    	isset($_POST['__CSRF_KEY']) && isset($_SESSION['__CSRF_KEY']) && $_POST['__CSRF_KEY'] == $_SESSION['__CSRF_KEY']){
-			$opt_val = array(
-	    		'appid'=> $_POST['appid'],
-	    		'appkey'=> $_POST['appkey'],
-	    	);
-	    	update_option('qq-app-login', $opt_val);
+	    if (isset($_POST['appid']) && isset($_POST['appkey'])){
+	    	if (!wp_verify_nonce($_POST['nonce'], 'set_option')){
+	    		?><div class="err"><p><strong><?php _e('Nonce error.'); ?></strong></p></div><?php
+	    	} else {
+				$opt_val = array(
+		    		'appid'=> $_POST['appid'],
+		    		'appkey'=> $_POST['appkey'],
+		    	);
+		    	update_option('qq-app-login', $opt_val);
 
-	    	?><div class="updated"><p><strong><?php _e('Settings saved.'); ?></strong></p></div><?php
+		    	?><div class="updated"><p><strong><?php _e('Settings saved.'); ?></strong></p></div><?php
+		    }
 	    }
 
 	    $csrfkey = ''.rand();
-	    $_SESSION['__CSRF_KEY'] = $csrfkey;
 
 		?><div class="wrap">
 			<h2><?php _e('移动APP功能：QQ登录插件'); ?></h2>
 			<form method="post" action="">
-				<input type="hidden" name="__CSRF_KEY" value="<?php echo $csrfkey; ?>" />
+				<input type="hidden" name="nonce" value="<?php echo wp_create_nonce('set_option'); ?>" />
 				<p>
 					<?php _e('APPID:')?>
 					<input type="text" name="appid" value="<?php echo $opt_val['appid'];?>" />
