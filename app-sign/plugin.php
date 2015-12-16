@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: 移动APP:分享助手
- * Description: 可以获取自己的邀请码、获取自己的邀请数量，在注册的时候填写邀请码会帮助对方增加邀请数量。注册时可传递参数inviteCode
+ * Plugin Name: 移动APP:签到助手
+ * Description: 可以每日签到，并累计签到次数。
  * Author: tdzl2003
  * Author URI: http://github.com/tdzl2003
  * Version: 0.1.0

@@ -22,10 +22,10 @@ class WP_PHONE_APP_LOGIN {
 	var $Api;
 
 	public function __construct() {
-		$Options = new WP_PHONE_APP_LOGIN_Options();
-		$Api = new WP_PHONE_APP_LOGIN_Api();
+		$this->Options = new WP_PHONE_APP_LOGIN_Options();
+		$this->Api = new WP_PHONE_APP_LOGIN_Api();
 
-		register_activation_hook( __FILE__, array($Api, 'install') );
+		register_activation_hook( __FILE__, array($this->Api, 'install') );
 	}
 	public static function instance() {
 		static $instance = null;
