@@ -87,6 +87,25 @@ class WP_APP_COUPON {
         );
     }
     public function initApi() {
+        register_rest_route('app/v1', '/coupons', array(
+            'methods'         => 'GET',
+            'callback'        => array( $this, 'getItems' ),
+            'permission_callback' => function () {
+                return current_user_can( 'level_0' );
+            }
+        ));
+    }
+    public function getItems(){
+        global $wpdb;
+        $data = $wpdb->get_results( $wpdb->prepare( "SELECT coupon_id, coupon_code, created_at, used_at
+            FROM $this->table_name
+            WHERE user_id = %d 
+            ORDER BY used_at=NULL DESC", get_current_user_id() ) );
+
+        return array(
+                'ok' => 1,
+                'data' => $data,
+            );
     }
     public static function instance() {
         static $instance = null;
