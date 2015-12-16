@@ -153,12 +153,6 @@ class WP_PHONE_APP_LOGIN_Api{
 		$phone = $wpdb->escape($phone);
 		$code = $wpdb->escape($code);
 
-		error_log("DELETE FROM `".$this->table_name."`
-				WHERE
-					`time` >= '$limit' AND
-					`phone` = '$phone' AND
-					`code` = '$code'");
-
 		return $wpdb->query(
 			"DELETE FROM `".$this->table_name."`
 				WHERE
@@ -204,7 +198,8 @@ class WP_PHONE_APP_LOGIN_Api{
 
 		update_user_meta($uid, 'open_type_phone', $phone);
 
-		apply_filters('sso_registered', $uid, $params);
+		$params['uid'] = $uid;
+		do_action('sso_registered', $params);
 
 		return array(
 			'ok' => 1,

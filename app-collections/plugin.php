@@ -54,12 +54,17 @@ WP_APP_Collection::instance();
 function wp_app_sso_login($type, $id, $token){
 	global $wpdb;
 	$uid = $wpdb -> get_var($wpdb -> prepare("SELECT user_id FROM $wpdb->usermeta um WHERE um.meta_key='%s' AND um.meta_value='%s'", 'open_type_'.$type, $id));
+	if (is_wp_error($uid)){
+		return $uid;
+	}
 	if ($uid){
 		wp_set_auth_cookie($uid, true, false);
 		wp_set_current_user($uid);
 		if (isset($token)){
 			update_user_meta($uid, 'open_token_'.$type, $token);
 		}
+	} else {
+		return new WP_Error( 'not_registered', '还没有注册。', array( 'status' => 404 ) );
 	}
 	return $uid;
 }
@@ -92,5 +97,7 @@ function wp_app_sso_register($type, $id, $token, $info){
 		update_user_meta($uid, 'open_token_'.$type, $token);
 	}
 
-	apply_filters('sso_registered', $uid, $info);
+	$info['uid'] = $uid;
+	do_action('sso_registered',  $info);
+	return $uid;
 }
