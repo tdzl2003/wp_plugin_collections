@@ -2,9 +2,11 @@
 
 add_option('phone-app-login', array(
 		"mode" => "static",
+		"accountid" => "",
+		"accounttoken" => "",
 		"appid" => "",
-		"appkey" => "",
-		"lifetime" => 600,
+		"tid" => "",
+		"lifetime" => 10,
 	));
 
 
@@ -43,14 +45,16 @@ class WP_PHONE_APP_LOGIN_Options {
 
 	    $opt_val = get_option('phone-app-login');
 
-	    if (isset($_POST['appid']) && isset($_POST['appkey']) && isset($_POST['mode']) && isset($_POST['lifetime'])){
+	    if (isset($_POST['mode'])){
 	    	if (!wp_verify_nonce($_POST['nonce'], 'set_option') || !$this->isValidMode($_POST['mode'])){
 	    		?><div class="err"><p><strong><?php _e('Nonce error.'); ?></strong></p></div><?php
 	    	} else {
 				$opt_val = array(
 					'mode' => $_POST['mode'],
+		    		'accountid' => $_POST['accountid'],
+		    		'accounttoken' => $_POST['accounttoken'],
 		    		'appid' => $_POST['appid'],
-		    		'appkey' => $_POST['appkey'],
+		    		'tid' => $_POST['tid'],
 		    		'lifetime' => $_POST['lifetime'],
 		    	);
 		    	update_option('phone-app-login', $opt_val);
@@ -73,12 +77,20 @@ class WP_PHONE_APP_LOGIN_Options {
 					</select>
 				</p>
 				<p>
-					<?php _e('APPID:')?>
+					<?php _e('Account ID:')?>
+					<input type="text" name="accountid" value="<?php echo $opt_val['accountid'];?>" />
+				</p>
+				<p>
+					<?php _e('Account Key:')?>
+					<input type="text" name="accounttoken" value="<?php echo $opt_val['accounttoken'];?>" />
+				</p>
+				<p>
+					<?php _e('App Id:')?>
 					<input type="text" name="appid" value="<?php echo $opt_val['appid'];?>" />
 				</p>
 				<p>
-					<?php _e('APPKEY:')?>
-					<input type="text" name="appkey" value="<?php echo $opt_val['appkey'];?>" />
+					<?php _e('Template ID:')?>
+					<input type="text" name="tid" value="<?php echo $opt_val['tid'];?>" />
 				</p>
 				<p>
 					<?php _e('Verify code lifetime:')?>

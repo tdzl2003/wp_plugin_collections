@@ -81,6 +81,9 @@ class WP_PHONE_APP_LOGIN_Api{
 		}
 
 		$code = substr(rand(10000, 19999), 1);
+		if ($option['mode'] == 'static') {
+			$code = '1234';
+		}
 
 		$result = $wpdb->insert( 
 			$this->table_name, 
@@ -94,6 +97,10 @@ class WP_PHONE_APP_LOGIN_Api{
 			return $result;
 		}
 
+		$args = array(
+				$code,
+				$option['lifetime'],
+			);
 		if ($option['mode'] == 'static'){
 			// 假装已经发了验证码
 			return array(
@@ -102,8 +109,10 @@ class WP_PHONE_APP_LOGIN_Api{
 			);
 		} else if ($option['mode'] == 'yuntongxun') {
 			// 通过云通讯发送验证码
+			return $this->sendYunTongXun($phone, $option, $args);
 		} else if ($option['mode'] == 'yuntongxuntest') {
 			// 通过云通讯测试发送验证码
+			return $this->sendYunTongXun($phone, $option, $args, true);
 		} else {
 			return new WP_Error( 'internal_error', '模式设置不正确', array('status'=>500));
 		}
@@ -112,11 +121,34 @@ class WP_PHONE_APP_LOGIN_Api{
 			'ok' => 1,
 		);
 	}
+	public function sendYunTongXun($phone, $option, $args, $isTest){
+		if(!function_exists('sendTemplateSMS')){
+			include_once( dirname(__FILE__) . '/SendTemplateSMS.php' );
+		} 
+		$rest = new CCPRESTSmsSDK($isTest ? 'sandboxapp.cloopen.com' : 'app.cloopen.com',8883,'2013-12-26');
+		$rest->setAccount($option['accountid'],$option['accounttoken']);
+		$rest->setAppId($option['appid']);
+
+		// 发送模板短信
+		$result = $rest->sendTemplateSMS($phone,$args,$option['tid']);
+		if($result == NULL ) {
+			break;
+		}
+		if($result->statusCode!=0) {
+			return new WP_Error('send_sms_error', $result->statusMsg, array('status'=>500));
+		}else{
+			// 获取返回信息
+			$smsmessage = $result->TemplateSMS;
+			return array(
+				'ok' => 1,
+			);
+		}
+	}
 	public function verify($phone, $code){
 		global $wpdb;
 
 		$option = get_option('phone-app-login');
-		$limit = gmdate( 'Y-m-d H:i:s',  time() - $option['lifetime'] );
+		$limit = gmdate( 'Y-m-d H:i:s',  time() - $option['lifetime']*60 );
 
 		$phone = $wpdb->escape($phone);
 		$code = $wpdb->escape($code);
