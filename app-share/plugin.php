@@ -9,7 +9,7 @@
  * License: GPL2+
  */
 
-class WP_APP_SHARE_LOGIN {
+class WP_APP_SHARE {
     public function __construct() {
         add_action('rest_api_init', array($this, 'initApi'));
         add_action('sso_registered', array($this, 'onRegisterd'));
@@ -81,5 +81,5 @@ class WP_APP_SHARE_LOGIN {
     }
 }
 
-WP_APP_SHARE_LOGIN::instance();
+WP_APP_SHARE::instance();
 
