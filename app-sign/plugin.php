@@ -92,7 +92,7 @@ class WP_APP_SIGN {
     public function getSignedCount($object, $field_name, $request){
         $result = get_user_meta($object['id'], $field_name, true);
         if ($result){
-            return $result;
+            return intval($result);
         }
         return 0;
     }

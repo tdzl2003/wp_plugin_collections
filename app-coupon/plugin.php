@@ -46,7 +46,8 @@ class WP_APP_COUPON {
             coupon_code bigint(20) UNSIGNED NOT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
             used_at datetime DEFAULT NULL,
-            PRIMARY KEY (coupon_id)
+            PRIMARY KEY (coupon_id),
+            KEY user (user_id, used_at)
         ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -94,6 +95,22 @@ class WP_APP_COUPON {
                 return current_user_can( 'level_0' );
             }
         ));
+        register_api_field( 'user',
+            'coupons',
+            array(
+                'get_callback'    => array($this, 'getCouponCount'),
+                'update_callback' => null,
+                'schema'          => null,
+            )
+        );
+    }
+    public function getCouponCount($object, $field_name, $request){
+        global $wpdb;
+        $count = $wpdb->get_var( $wpdb->prepare( "SELECT count(*)
+            FROM $this->table_name
+            WHERE user_id = %d AND ISNULL(used_at)
+            ORDER BY used_at=NULL DESC", $object['id'] ) );
+        return $count;
     }
     public function getItems(){
         global $wpdb;
@@ -101,6 +118,14 @@ class WP_APP_COUPON {
             FROM $this->table_name
             WHERE user_id = %d 
             ORDER BY used_at=NULL DESC", get_current_user_id() ) );
+
+        foreach ($data as $key=>$value){
+            $data[$key] = array(
+                    'key'=> sprintf('%06d-%04d', $value->coupon_id, $value->coupon_code),
+                    'created_at' => $value->created_at,
+                    'used_at' => $value->used_at,
+                );
+        }
 
         return array(
                 'ok' => 1,

@@ -82,7 +82,7 @@ class WP_PHONE_APP_LOGIN_Api{
 
 		$code = sprintf('%04d', rand(0, 9999));
 		if ($option['mode'] == 'static') {
-			// $code = '1234';
+			$code = '1234';
 		}
 
 		$result = $wpdb->insert( 

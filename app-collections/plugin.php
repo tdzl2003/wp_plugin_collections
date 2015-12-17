@@ -15,11 +15,25 @@ class WP_APP_Collection {
 		}
 		add_action( 'init', array($this, 'init'));
 		add_action( 'parse_request', array($this, 'parseRequest') );
+		add_action( 'rest_api_init', array($this, 'initApi'));
 	}
 	public function init(){
 		add_rewrite_rule('^app/nonce?$', 'index.php?app_route=get-nonce', 'top');
 		global $wp;
 		$wp->add_query_var( 'app_route' );
+	}
+	public function initApi(){
+		register_rest_route( 'app/v1', '/logout', array(
+                'methods'=>'POST',
+                'callback'=> array($this, 'doLogout'),
+                'permission_callback' => function () {
+                    return current_user_can( 'level_0' );
+                }
+            ));
+	}
+	public function doLogout(){
+		wp_logout();
+		return array('ok'=>1);
 	}
 	public function parseRequest(){
 		if (empty( $GLOBALS['wp']->query_vars['app_route'] ) ){
