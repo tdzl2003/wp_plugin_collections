@@ -9,6 +9,10 @@ class WP_QQ_APP_LOGIN_Api{
 				'methods'=>'POST',
 				'callback'=> array($this, 'processLogin')
 			));
+		register_rest_route( 'app/v1', '/register/qq', array(
+				'methods'=>'POST',
+				'callback'=> array($this, 'processRegister')
+			));
 	}
 	public function processLogin(WP_REST_Request $request){
 		$params = $request->get_params();
@@ -16,15 +20,16 @@ class WP_QQ_APP_LOGIN_Api{
 		$option = get_option('qq-app-login');
 		$appid = $option['appid'];
 
-		$openid = $params['openid'];
-		$token = $params['access_token'];
+		$openid = $params['openId'];
+		$token = $params['accessToken'];
 
 		$result = json_decode(wp_remote_get("https://graph.qq.com/user/get_simple_userinfo?access_token={$token}&openid={$openid}&oauth_consumer_key=$appid", [
 				'sslcertificates' => dirname(__FILE__).'/ca-bundle.crt'
 			])['body'], true);
 
 		if (isset($result['ret']) && $result['ret'] != 0){
-			return new WP_Error( 'auth_failed', $val['msg'], array( 'status' => 403 ) );
+			error_log(print_r($result, true));
+			return new WP_Error( 'auth_failed', $result['msg'], array( 'status' => 403 ) );
 		}
 
 		$uid = wp_app_sso_login("qq", $openid, $token);
@@ -45,22 +50,18 @@ class WP_QQ_APP_LOGIN_Api{
 		$option = get_option('qq-app-login');
 		$appid = $option['appid'];
 
-		$openid = $params['openid'];
-		$token = $params['access_token'];
+		$openid = $params['openId'];
+		$token = $params['accessToken'];
 
 		$result = json_decode(wp_remote_get("https://graph.qq.com/user/get_simple_userinfo?access_token={$token}&openid={$openid}&oauth_consumer_key=$appid", [
 				'sslcertificates' => dirname(__FILE__).'/ca-bundle.crt'
 			])['body'], true);
 
 		if (isset($result['ret']) && $result['ret'] != 0){
-			return new WP_Error( 'auth_failed', $val['msg'], array( 'status' => 403 ) );
+			error_log(print_r($result, true));
+			return new WP_Error( 'auth_failed', $result['msg'], array( 'status' => 403 ) );
 		}
 
-		if (!wp_app_sso_login("qq", $openid, $token))
-		{
-			return new WP_Error( 'not_registered', '还没有注册。', array( 'status' => 404 ) );
-			
-		}
 		$params['image'] = $result['figureurl_qq_2'];
 		$params['nickname'] = $result['nickname'];
 
