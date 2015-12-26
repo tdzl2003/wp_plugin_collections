@@ -48,6 +48,15 @@ class WP_PHONE_APP_LOGIN_Api{
 		            ),
 		        ),
 			));
+		register_rest_route( 'app/v1', '/resetpass/phone', array(
+				'methods'=>'POST',
+				'callback'=> array($this, 'processResetPassword'),
+				'args' => array(
+		            'phone' => array(
+		                'validate_callback' => array($this, 'validatePhone')
+		            ),
+		        ),
+			));
 		register_rest_route( 'app/v1', '/register/phone', array(
 				'methods'=>'POST',
 				'callback'=> array($this, 'processRegister'),
@@ -168,7 +177,6 @@ class WP_PHONE_APP_LOGIN_Api{
 		$code = $params['code'];
 
 		$result = $this->verify($phone, $code);
-		error_log($result);
 		if (is_wp_error($result)){
 			return $result;
 		}
@@ -220,6 +228,35 @@ class WP_PHONE_APP_LOGIN_Api{
 		}
 		return array(
 			'ok' => 1
+		);
+	}
+	public function processResetPassword(WP_REST_Request $request){
+		$params = $request->get_params();
+		$option = get_option('phone-app-login');
+
+		$phone = $params['phone'];
+		$code = $params['code'];
+
+		$result = $this->verify($phone, $code);
+		if (is_wp_error($result)){
+			return $result;
+		}
+		if (!$result) {
+			return new WP_Error('verify_failed', '验证码验证失败。', array('status'=>403));
+		}
+
+		$user = get_user_by('login', $phone);
+		if (is_wp_error($user)){
+			return $user;
+		}
+		$result = reset_password($user, $params['password']);
+		
+		if (is_wp_error($result)){
+			return $result;
+		}
+
+		return array(
+			'ok' => 1,
 		);
 	}
 }
