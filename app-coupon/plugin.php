@@ -35,6 +35,7 @@ class WP_APP_COUPON {
         if ($option['inviteCount'] >0){
             add_action('invited_count_updated', array($this, 'onInvite'));
         }
+        add_action( 'admin_menu', array( $this, 'initMenu' ) );
     }
     public function install() {
         global $wpdb;
@@ -140,6 +141,143 @@ class WP_APP_COUPON {
         }
 
         return $instance;
+    }
+    public function initMenu() {
+        add_utility_page(
+            '兑换券管理', 
+            '兑换券', 
+            'manage_options', 
+            'coupon', 
+            array($this, 'renderHomePage'), 
+            'dashicons-megaphone'
+        );
+        add_submenu_page(
+            'coupon',
+            '兑换券设置',     // 页面标题
+            '设置',         // 菜单标题
+            'manage_options',       // 权限需求
+            'coupon-options',         // 唯一标识
+            array($this, 'renderOptionPage')
+        );
+    }
+    public function renderError($msg) {
+        ?><div class="error"><p><strong><?php _e($msg); ?></strong></p></div><?php
+    }
+    public function renderOk($msg) {
+        ?><div class="updated"><p><strong><?php _e($msg); ?></strong></p></div><?php
+    }
+    public function renderGiveResult() {
+        $code = $_POST['invite-code'];
+        $uid = $code - 100000;
+        $user = get_userdata( $uid );
+        if ( empty( $uid ) || empty( $user->ID ) ) {
+            $this->renderError('找不到该用户，邀请码：'.$code);
+            return;
+        }
+        $this->giveCoupon($uid);
+        $this->renderOk('兑换券发放成功。');
+    }
+    public function renderDismissResult(){
+        global $wpdb;
+
+        $code = $_POST['coupon-code'];
+        if (!preg_match("/^(\d{6})\-(\d{4})$/", $code, $m)){
+            $this->renderError('非法的兑换券'.$code);
+            return;
+        }
+        $count = $wpdb->query( $wpdb->prepare( "UPDATE
+            $this->table_name
+            SET used_at=CURRENT_TIMESTAMP
+            WHERE coupon_id=%d AND coupon_code=%d AND ISNULL(used_at)", $m[1], $m[2] ) );
+        if ($count > 0) {
+            $this->renderOk('核销成功：'.$code);
+        } else {
+            $time = $wpdb->get_var($wpdb->prepare("SELECT used_at
+                    FROM $this->table_name
+                    WHERE coupon_id=%d AND coupon_code=%d
+                ", $m[1], $m[2]));
+            if ($time){
+                $this->renderError('该兑换券已与'.$time.'被核销');
+            } else {
+                $this->renderError('无效的兑换券');
+            }
+        }
+    }
+    public function renderHomePage() {
+        if ($_POST['action'] == 'give') {
+            $this->renderGiveResult();
+        }
+        if ($_POST['action'] == 'dismiss') {
+            $this->renderDismissResult();
+        }
+        ?>
+        <div class="wrap">
+            <h2><?php _e('兑换券发放'); ?></h2>
+            <form method="post" action="">
+                <input type="hidden" name="action" value="give"/>
+                <p>
+                    <?php _e('邀请码：'); ?>
+                    <input type="text" name="invite-code" />
+                </p>
+                <p class="submit">
+                    <input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('发放'); ?>" />
+                </p>
+            </form>
+        </div>
+        <div class="wrap">
+            <h2><?php _e('兑换券核销'); ?></h2>
+            <form method="post" action="">
+                <input type="hidden" name="action" value="dismiss"/>
+                <p>
+                    <?php _e('兑换券：'); ?>
+                    <input type="text" name="coupon-code" />
+                </p>
+                <p class="submit">
+                    <input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('核销'); ?>" />
+                </p>
+            </form>
+        </div>
+        <?php
+    }
+    public function renderOptionPage() {
+        if (!current_user_can('manage_options'))
+        {
+          wp_die( __('您没有权限修改此设置，请咨询您的网站管理员。') );
+        }
+
+        $opt_val = get_option('app-coupon');
+
+        if (isset($_POST['signCount']) && isset($_POST['inviteCount'])){
+            if (!wp_verify_nonce($_POST['nonce'], 'set_option')){
+                ?><div class="err"><p><strong><?php _e('Nonce error.'); ?></strong></p></div><?php
+            } else {
+                $opt_val = array(
+                    'signCount'=> $_POST['signCount'],
+                    'inviteCount'=> $_POST['inviteCount'],
+                );
+                update_option('app-coupon', $opt_val);
+
+                ?><div class="updated"><p><strong><?php _e('Settings saved.'); ?></strong></p></div><?php
+            }
+        }
+
+        ?><div class="wrap">
+            <h2><?php _e('兑换券设置'); ?></h2>
+            <form method="post" action="">
+                <input type="hidden" name="nonce" value="<?php echo wp_create_nonce('set_option'); ?>" />
+                <p>
+                    <?php _e('签到多少次奖励兑换券:')?>
+                    <input type="text" name="signCount" value="<?php echo $opt_val['signCount'];?>" />
+                </p>
+                <p>
+                    <?php _e('邀请多少好友奖励兑换券:')?>
+                    <input type="text" name="inviteCount" value="<?php echo $opt_val['inviteCount'];?>" />
+                </p>
+                <p class="submit">
+                    <input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Save Changes') ?>" />
+                </p>
+            </form>
+        </div><?php
     }
 }
 
