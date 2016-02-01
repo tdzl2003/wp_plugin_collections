@@ -13,6 +13,8 @@ class WP_APP_SHARE {
     public function __construct() {
         add_action('rest_api_init', array($this, 'initApi'));
         add_action('sso_registered', array($this, 'onRegisterd'));
+        add_action('manage_users_columns', array($this, 'getUserColumn'));
+        add_action('manage_users_custom_column', array($this, 'getColumnData'), 10, 3);
     }
     public function initApi() {
         register_api_field( 'user',
@@ -78,6 +80,17 @@ class WP_APP_SHARE {
         }
 
         return $instance;
+    }
+    public function getUserColumn($headers){
+        unset($headers['posts']);
+        $headers['invited'] = '邀请数';
+        return $headers;
+    }
+    public function getColumnData($value, $column_name, $user_id){
+        if ($column_name == 'invited') {
+            return ''.get_user_meta($user_id, $column_name, true);
+        }
+        return $value;
     }
 }
 
